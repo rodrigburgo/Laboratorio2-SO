@@ -86,19 +86,6 @@ class Memoria {
         }
     }
 
-    eliminarProcesoPag(id) {
-        for (let index = 0; index < this.segmentos.length; index++) {
-            const element = this.segmentos[index];
-
-            if (element.proceso != null) {
-                if (element.proceso.id == id) {
-                    this.segmentos[index].proceso = null;
-                }
-            }
-        }
-        this.dividirMemoria();
-    }
-
     cabeSegmento(proceso) {
         var cabe = false;
         var segmentosLibres = [];
@@ -122,30 +109,6 @@ class Memoria {
     }
 
     insertarProceso(proceso, metodo, seleccionAjuste) {
-        /// Paginacion
-        if (metodo == 6) {
-            if (this.getMemoriaDisponible() == 0) {
-                return 0;
-            }
-            if (this.getMemoriaDisponible() < proceso.tamano) {
-                return 1;
-            }
-
-            var procesoPaginado = this.paginarProceso(proceso, this.segmentos[0].tamano);
-            return this.paginacion(procesoPaginado);
-        }
-
-        /// Segmentación
-        if (metodo == 5) {
-            if (this.getMemoriaDisponible() == 0) {
-                return 0;
-            }
-            if (this.getMemoriaDisponible() < proceso.tamano) {
-                return 1;
-            }
-
-            return this.segmentarProceso(proceso, seleccionAjuste);
-        }
 
         /// Metodo estatico fijo
         if (metodo == 4) {
@@ -164,7 +127,7 @@ class Memoria {
 
         /// Evalua los metodos de dinamica
         if (metodo == 1 || metodo == 2) {
-            /// Sí hubi algún error en el llenadod el proceso
+            /// Sí hubo algún error en el llenado el proceso
             if (resultado == 1 || resultado == 0) {
                 return resultado;
             }
@@ -277,102 +240,6 @@ class Memoria {
             }
         }
         return 0;
-    }
-
-    paginacion(paginasProceso) {
-        for (let index2 = 0; index2 < paginasProceso.length; index2++) {
-            for (let index = 0; index < this.segmentos.length; index++) {
-                const segmento = this.segmentos[index];
-
-                if (segmento.proceso === null) {
-                    this.segmentos[index].proceso = paginasProceso[index2];
-                    break;
-                }
-            }
-        }
-        return this.segmentos;
-
-    }
-
-    paginarProceso(proceso, tamanoPagina) {
-        var pagProceso = Math.ceil(proceso.tamano / tamanoPagina);
-        var arrProcesos = [];
-
-        for (let index = 0; index < pagProceso; index++) {
-            arrProcesos.push({ "id": proceso.id, "nombre": proceso.nombre + index, "tamano": tamanoPagina });
-        }
-        return arrProcesos;
-    }
-
-    segmentarProceso(proceso, seleccionAjuste) {
-        var resultado = null;
-        var tamanoInsuficiente = false;
-        if (seleccionAjuste == 'primer') {
-            if (!this.cabeSegmento({ "tamano": proceso.bss })) {
-                tamanoInsuficiente = true;
-            }
-            resultado = this.primerAjuste({ "id": proceso.id, "nombre": proceso.nombre + " - BSS", "tamano": proceso.bss });
-            this.dividirMemoria();
-
-            if (!this.cabeSegmento({ "tamano": proceso.data })) {
-                tamanoInsuficiente = true;
-            }
-            resultado = this.primerAjuste({ "id": proceso.id, "nombre": proceso.nombre + " - Data", "tamano": proceso.data });
-            this.dividirMemoria();
-
-            if (!this.cabeSegmento({ "tamano": proceso.text })) {
-                tamanoInsuficiente = true;
-            }
-            resultado = this.primerAjuste({ "id": proceso.id, "nombre": proceso.nombre + " - Text", "tamano": proceso.text });
-
-        } else if (seleccionAjuste == 'peor') {
-            if (!this.cabeSegmento({ "tamano": proceso.bss })) {
-                tamanoInsuficiente = true;
-            }
-            resultado = this.peorAjuste({ "id": proceso.id, "nombre": proceso.nombre + " - BSS", "tamano": proceso.bss });
-            this.dividirMemoria();
-
-            if (!this.cabeSegmento({ "tamano": proceso.data })) {
-                tamanoInsuficiente = true;
-            }
-            resultado = this.peorAjuste({ "id": proceso.id, "nombre": proceso.nombre + " - Data", "tamano": proceso.data });
-            this.dividirMemoria();
-
-            if (!this.cabeSegmento({ "tamano": proceso.text })) {
-                tamanoInsuficiente = true;
-            }
-            resultado = this.peorAjuste({ "id": proceso.id, "nombre": proceso.nombre + " - Text", "tamano": proceso.text });
-
-        } else if (seleccionAjuste == 'mejor') {
-            if (!this.cabeSegmento({ "tamano": proceso.bss })) {
-                tamanoInsuficiente = true;
-            }
-            resultado = this.mejorAjuste({ "id": proceso.id, "nombre": proceso.nombre + " - BSS", "tamano": proceso.bss });
-            this.dividirMemoria();
-
-            if (!this.cabeSegmento({ "tamano": proceso.data })) {
-                tamanoInsuficiente = true;
-            }
-            resultado = this.mejorAjuste({ "id": proceso.id, "nombre": proceso.nombre + " - Data", "tamano": proceso.data });
-            this.dividirMemoria();
-
-            if (!this.cabeSegmento({ "tamano": proceso.text })) {
-                tamanoInsuficiente = true;
-            }
-            resultado = this.mejorAjuste({ "id": proceso.id, "nombre": proceso.nombre + " - Text", "tamano": proceso.text });
-        }
-
-        if (tamanoInsuficiente) {
-            this.eliminarProcesoPag(proceso.id);
-            resultado = 1;
-        }
-
-        /// Sí hubo algún error en el llenadod el proceso
-        if (resultado == 1 || resultado == 0) {
-            return resultado;
-        }
-
-        return this.dividirMemoria();
     }
 
     dividirMemoria() {

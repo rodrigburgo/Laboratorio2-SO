@@ -39,7 +39,6 @@ var particionesVariables = [1, 2, 2, 3, 3, 4]
 var gestionMemoria = 0;
 var programasEjecutados = [];
 var segmentosEjecutados = [];
-var programasTTP = [];
 var memoria = new Memoria();
 var idProceso = 0;
 var colores = [];
@@ -143,26 +142,6 @@ function llenarEjecutados() {
     };
 }
 
-function llenarMarcos() {
-    document.getElementById("marcos").replaceChildren();
-
-    var segmentos = memoria.getSegmentos();
-    for (let i = 0; i < segmentos.length; i++) {
-
-        var libre = 1;
-        if (segmentos[i].proceso == null) {
-            libre = 0;
-        }
-
-        const idHex = componentToHex(i);
-        var fila = "<tr><td>" + idHex + "</td><td>0x" + idHex + segmentos[i].posicion + "</td><td>" + libre + "</td></tr>";
-
-        var btn = document.createElement("TR");
-        btn.innerHTML = fila;
-        document.getElementById("marcos").appendChild(btn);
-    };
-}
-
 function llenarLibres() {
     document.getElementById("libres").replaceChildren();
 
@@ -190,39 +169,6 @@ function llenarSegmentos() {
         btn.innerHTML = fila;
         document.getElementById("segmentos").appendChild(btn);
     };
-}
-
-function llenarTpps(){
-    document.getElementById("tpps").replaceChildren();
-
-    for (let i = 0; i < programasTTP.length; i++) {
-        const programa = programasTTP[i];
-        console.log(programasTTP);
-        var marco = determinarMarco(programa.nombre, programa.id);
-
-        var fila = "<tr><td>" + programa.id + "</td><td>" + programa.nombre + "</td><td>" + programa.pagina + "</td><td>"+ componentToHex(marco) +"</td><td>"+"<button class='btn btnApagar'" + " value='" + i + "'>Apagar</button>" + "</tr>";
-        
-        var btn = document.createElement("TR");
-        btn.innerHTML = fila;
-        document.getElementById("tpps").appendChild(btn);
-    }
-}
-
-function determinarMarco(nombreProceso, idProceso){
-    
-    var segmentos = memoria.getSegmentos();
-    var marco = 0;
-
-    for (let index = 0; index < segmentos.length; index++){
-        if(segmentos[index].proceso == null){
-            console.log("null");
-        }else{
-            if (nombreProceso === segmentos[index].proceso.nombre && idProceso === segmentos[index].proceso.id){
-                return marco = index;
-            }
-        }
-    } 
-    
 }
 
 function limpiarMemoria() {
@@ -372,34 +318,6 @@ function agregarListener() {
                     alert("Debe ingresar el número de particiones")
                 }
                 break;
-            case 5:
-                if (seleccionAjuste != undefined) {
-                    limpiarMemoria();
-                    dibujarMemoria(1, 4);
-
-                    dibujarProceso("000000", "SO", 1048576);
-                    activarBotones(botones);
-                } else {
-                    alert("Debe seleccionar un tipo de ajuste");
-                }
-                break;
-            case 6:
-                var tamPagina = document.getElementsByName("tamanoPagina");
-                const mega = 1048576;
-                if (tamPagina[0].value != "") {
-                    limpiarMemoria();
-
-                    var cantParticiones = (mega * 15) / tamPagina[0].value;
-
-                    dibujarMemoria(cantParticiones, gestionMemoria);
-                    memoria.setMetodoFija(parseInt(cantParticiones));
-
-                    dibujarProceso("000000", "SO", 1048576);
-                    activarBotones(botones);
-                } else {
-                    alert("Debe llenar el tamaño de la pagina");
-                }
-                break;
             default:
                 alert("Debe seleccionar un método de gestión de memoria");
                 limpiarMemoria();
@@ -454,39 +372,6 @@ function agregarListener() {
 
         llenarSegmentos();
         llenarLibres();
-
-        dibujarProcesos();
-    })
-
-    //// Detener programas en ejecución paginación
-    $('#tablaTPP').on('click','.btnApagar', function (event) {
-        limpiarMemoria();
-
-        var tamPagina = document.getElementsByName("tamanoPagina");
-        const mega = 1048576;
-        var cantParticiones = (mega * 15) / tamPagina[0].value;
-
-        dibujarMemoria(cantParticiones, gestionMemoria);
-
-
-        dibujarProceso("000000", "SO", 1048576);
-
-        var $row = $(this).closest("tr"),
-            $tds = $row.find("td");
-
-        memoria.eliminarProcesoPag($tds[0].textContent);
-
-        programasTTP = removeItemFromArr(programasTTP, $tds[0].textContent);
-
-        for (let index = 0; index < programasTTP.length; index++) {
-            const element = programasTTP[index];
-            var proceso = memoria.getProceso(element.id);
-            element.posicion = proceso[0].posicion;
-        }
-
-        llenarMarcos();
-
-        llenarTpps();
 
         dibujarProcesos();
     })
@@ -599,38 +484,6 @@ function agregarListener() {
                 ordenamiento[2].disabled = true;
 
                 break;
-            case "5":
-                console.log("Segmentacion");
-                gestionMemoria = 5;
-                $("#contMetodos").hide();
-                $(".ordenamiento").show();
-                mostrarTablasPag(false);
-                mostrarTablasSeg(true);
-
-                ordenamiento[0].disabled = false;
-                ordenamiento[1].disabled = false;
-                ordenamiento[2].disabled = false;
-
-                break;
-            case "6":
-                console.log("Paginacion");
-                gestionMemoria = 6;
-                $("#contMetodos").show();
-                $(".ordenamiento").hide();
-                mostrarTablasSeg(false);
-                mostrarTablasPag(true);
-
-                document.getElementById("contMetodos").replaceChildren();
-                const confPagina = "<div>Tamaño de la pagina</div>" +
-                    "<input type='text' name='tamanoPagina' id='tamanoPagina' autocomplete='off' placeholder='Tamano en Bytes'>" + "</input>";
-                var btn = document.createElement("DIV");
-                btn.innerHTML = confPagina;
-                document.getElementById("contMetodos").appendChild(btn);
-
-                ordenamiento[0].disabled = true;
-                ordenamiento[1].disabled = true;
-                ordenamiento[2].disabled = true;
-                break;
             default:
                 $(".ordenamiento").hide();
                 $("#contMetodos").hide();
@@ -669,29 +522,6 @@ function ejecutarProceso(proceso) {
             "id": idProceso, "nombre": proceso[0].textContent, "tamano": proceso[4].textContent, "posicion": procesoGuardado[0].posicion
         });
         llenarEjecutados();
-    }
-
-    if (gestionMemoria == 5) {
-        var procesoGuardado = memoria.getProceso(idProceso + 1);
-
-        idProceso += 1;
-        procesoGuardado.forEach(procesog => {
-            var parte = procesog.proceso.nombre.split(" - ")
-            segmentosEjecutados.push({"id": idProceso, "nombre": proceso[0].textContent, "parte": parte[1], "tamano": procesog.tamano, "posicion": procesog.posicion});
-        });
-        llenarSegmentos();
-        llenarLibres();
-    }
-
-    if (gestionMemoria == 6) {
-        var procesoGuardado = memoria.getProceso(idProceso + 1);
-        idProceso += 1;
-        llenarMarcos();
-
-        for(let index = 0; index < procesoGuardado.length; index++ ){
-            programasTTP.push({"id": procesoGuardado[index].proceso.id, "nombre": procesoGuardado[index].proceso.nombre, "pagina": index});
-        }
-        llenarTpps();
     }
 
     dibujarProcesos();
