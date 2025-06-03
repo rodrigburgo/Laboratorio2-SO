@@ -21,6 +21,18 @@ class Memoria {
         return proceso;
     }
 
+    getProcesos() {
+        var procesos = [];
+
+        this.segmentos.forEach(segmento => {
+            if (segmento.proceso != null) {
+                procesos.push(segmento.proceso);
+            }
+        });
+
+        return procesos;
+    }
+
     getMemoriaDisponible() {
         var count = 0;
         this.segmentos.forEach(segmento => {

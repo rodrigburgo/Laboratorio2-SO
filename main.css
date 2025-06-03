@@ -244,3 +244,28 @@ canvas {
     height: 400px;
   }
 }
+
+.tablaTiempos {
+  border: 1px solid #ccc;
+  border-collapse: collapse;
+}
+
+.tablaTiempos thead {
+  background-color: var(--secondary-color);
+  color: var(--text-light);
+}
+
+.tablaTiempos th,
+.tablaTiempos td {
+  border: 1px solid #ccc;
+  padding: 10px;
+  text-align: center;
+}
+
+.tablaTiempos tbody tr:nth-child(even) {
+  background-color: #f4f4f4;
+}
+
+.tablaTiempos tbody tr:hover {
+  background-color: #e8f4ff;
+}
