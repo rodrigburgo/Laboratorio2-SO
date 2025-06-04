@@ -86,53 +86,53 @@ function limpiarMemoria() {
     canvas.width = canvas.width;
 }
 
-function dibujarProceso(posicionHex, nombre, tamano, id) {
+function dibujarProceso(posicionHex, nombre, tamanoSegmento, id, tamanoProceso = null) {
     var canvas = document.getElementById("memoria");
     if (canvas.getContext) {
         var ctx = canvas.getContext("2d");
-        /// 51px = 1048576 bytes = 1 MiB
-        /// 51*tamaño/1024*1024
-        var posicion = 51 * parseInt(componentToHex(posicionHex), 16) / 1048576;
-        var altura = 51 * tamano / 1048576;
+        var posicion = 43.5 * parseInt(componentToHex(posicionHex), 16) / 1048576;
+        var altura = 43.5 * tamanoSegmento / 1048576;
 
-        // Fondo
-        var colorId = null;
-        for (let index = 0; index < this.colores.length; index++) {
-            const element = this.colores[index];
-            if (element.id == id) {
-                colorId = index
+        let r = 255, g = 255, b = 255;
+        if (id != null) {
+            let colorId = this.colores.findIndex(c => c.id == id);
+            if (colorId >= 0) {
+                ({ r, g, b } = this.colores[colorId]);
+            } else {
+                r = Math.round(Math.random() * 255);
+                g = Math.round(Math.random() * 255);
+                b = Math.round(Math.random() * 255);
+                this.colores.push({ id, r, g, b });
             }
-        }
 
-        if (colorId != null) {
-            var r = this.colores[colorId].r;
-            var g = this.colores[colorId].g;
-            var b = this.colores[colorId].b;
+            ctx.fillStyle = "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
         } else {
-            var r = Math.round(Math.random() * 255);
-            var g = Math.round(Math.random() * 255);
-            var b = Math.round(Math.random() * 255);
-            this.colores.push({ "id": id, "r": r, "g": g, "b": b });
+            ctx.fillStyle = "#FFFFFF";
         }
 
-        ctx.fillStyle = "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
         ctx.fillRect(0, posicion, 300, altura);
+        ctx.strokeStyle = "black";
+        ctx.strokeRect(0, posicion, 300, altura);
 
-        // Texto
-        ctx.font = "20px Arial";
-        ctx.textAlign = "center";
-
-        var o = Math.round(((parseInt(r) * 299) + (parseInt(g) * 587) + (parseInt(b) * 114)) / 1000);
-        if (o > 125) {
-            ctx.fillStyle = 'black';
-        } else {
-            ctx.fillStyle = 'white';
+        // Texto dentro del bloque
+        if (id != null && tamanoProceso != null) {
+            const texto = `${nombre} (${(tamanoProceso / 1024).toFixed(1)} KiB)`;
+            ctx.font = "16px Arial";
+            ctx.textAlign = "center";
+            const o = Math.round((r * 299 + g * 587 + b * 114) / 1000);
+            ctx.fillStyle = o > 125 ? 'black' : 'white';
+            ctx.fillText(texto, 150, posicion + altura / 1.5, 280);
         }
 
-        ctx.strokeRect(0, posicion, 300, altura);
-        ctx.fillText(nombre, 150, posicion + altura / 1.5, 300);
+        // Mostrar tamaño del segmento a la derecha
+        ctx.font = "14px Arial";
+        ctx.textAlign = "left";
+        ctx.fillStyle = "black";
+        ctx.fillText(`${(tamanoSegmento / 1024).toFixed(1)} KiB`, 310, posicion + altura / 2);
     }
 }
+
+
 
 function generarTabla() {
     const tiempos = parseInt(document.getElementById("tiempos").value);
@@ -257,7 +257,7 @@ function actualizarOrdenColumna(tabla, indiceColumna) {
                     td.textContent = td.dataset.orden;
                 } else {
                     // aún no tiene número asignado, dejamos para asignar después
-                    td.dataset.orden = ""; 
+                    td.dataset.orden = "";
                     td.textContent = "";
                 }
             }
@@ -436,7 +436,7 @@ function iniciarMemoria() {
     memoria = new Memoria(1048576 * 15, null);
     programasEjecutados = [];
     idProceso = 0;
-    
+
     switch (gestionMemoria) {
 
         case 1:
@@ -473,7 +473,7 @@ function iniciarMemoria() {
 
                 memoria.setMetodoFija(parseInt(cantParticion[0].value));
 
-                
+
             } else {
                 alert("Debe ingresar el número de particiones")
             }
@@ -514,17 +514,17 @@ function dibujarMemoria(numParticiones, tipoGestionMemoria) {
 
         var ctx = canvas.getContext("2d");
         if (tipoGestionMemoria == 4) {
-            var valor = 765 / numParticiones;
+            var valor = 700 / numParticiones;
 
             for (let index = 0; index < numParticiones; index++) {
-                ctx.rect(0, index * valor + 51, 300, valor);
+                ctx.rect(0, index * valor + 43.5, 300, valor);
                 ctx.stroke();
             }
         } else if (tipoGestionMemoria == 3) {
             var cont = 0;
 
             for (let index = 0; index < numParticiones; index++) {
-                ctx.rect(0, cont * 51 + 51, 300, 51 * particionesVariables[index]);
+                ctx.rect(0, cont *43.5 + 43.5, 300, 43.5 * particionesVariables[index]);
                 ctx.stroke();
                 cont = cont + particionesVariables[index];
             }
@@ -757,20 +757,26 @@ function mostrarImagen(index) {
     }
 
     dibujarMemoria(numParticiones, gestionMemoria);
-    dibujarProceso("000000", "SO", 1048576);
+    dibujarProceso("000000", "SO", 1048576, "SO", 1048576);
     // Dibujar los procesos en ese tiempo
     memoriaSnapshot.segmentos.forEach(seg => {
-        if (seg.proceso) {
-            dibujarProceso(
-                seg.posicion,
-                "(" + seg.proceso.id + ")" + seg.proceso.nombre,
-                seg.proceso.tamano,
-                seg.proceso.id
-            );
-        }
-    });
-}
+    const nombre = seg.proceso ? `(${seg.proceso.id})${seg.proceso.nombre}` : "";
+    const tamanoProceso = seg.proceso ? seg.proceso.tamano : null;
+    const tamanoSegmento = seg.tamano;
+    const id = seg.proceso ? seg.proceso.id : null;
 
+    dibujarProceso(
+        seg.posicion,
+        nombre,
+        tamanoSegmento,
+        id,
+        tamanoProceso
+    );
+});
+
+
+
+};
 
 function init() {
     llenarProgramas();

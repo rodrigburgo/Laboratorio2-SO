@@ -172,35 +172,38 @@ class Memoria {
     }
 
     peorAjuste(proceso) {
-        // return 1 si el proceso no cabe en el segmento
-        // return 0 si la memoria esta llena
         var memoriaLlena = true;
-        var segmento = 0;
-        for (let index = 0; index < this.segmentos.length; index++) {
-            const element = this.segmentos[index];
-            if (element.proceso === null) {
-                if (element.tamano >= parseInt(proceso.tamano)) {
-                    segmento = index;
-                }
+        var indicePeor = -1;
+        var mayorTamano = -1;
+
+        for (let i = 0; i < this.segmentos.length; i++) {
+            const segmento = this.segmentos[i];
+
+            if (segmento.proceso === null) {
                 memoriaLlena = false;
+
+                if (segmento.tamano >= parseInt(proceso.tamano)) {
+                    if (segmento.tamano > mayorTamano) {
+                        mayorTamano = segmento.tamano;
+                        indicePeor = i;
+                    }
+                }
             }
         }
 
-        if (segmento == 0 && this.segmentos[segmento].proceso != null) {
-            return 1;
-        }
-
         if (memoriaLlena) {
-            return 0;
+            return 0; // La memoria está llena
         }
 
-        if (this.segmentos[segmento].tamano >= proceso.tamano) {
-            this.segmentos[segmento].proceso = proceso;
-            return this.segmentos;
+        if (indicePeor === -1) {
+            return 1; // No hay espacio suficiente en ningún segmento
         }
 
-        return 1;
+        // Asignar el proceso al segmento más grande adecuado
+        this.segmentos[indicePeor].proceso = proceso;
+        return this.segmentos;
     }
+
 
     mejorAjuste(proceso) {
         // return 1 si el proceso no cabe en el segmento
