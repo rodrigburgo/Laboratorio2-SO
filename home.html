@@ -61,7 +61,6 @@
                     <span class="checkmark"></span>
                 </label><br>
 
-
                 <label class="labelOrd">
                     Primer ajuste
                     <input type="radio" name="ordenamiento" value="primer">
@@ -72,7 +71,7 @@
         </div>
 
         <div class="box" id="tablasEjec">
-            <div class="titulo" id="tituloEjecutados">Lista de programas ejecutados</div>
+            <div class="titulo">Lista de programas ejecutados</div>
             <div class="contenedorTablaEjecutados">
                 <table class="tabla" id="tablaEjecutados">
                     <thead>
@@ -88,78 +87,16 @@
                     </tbody>
                 </table>
             </div>
-
-            <div class="titulo" id="tituloSegmentacion" style="display: none;">Segmentos</div>
-            <div class="contenedorTablaSegmentos" style="display: none;">
-                <table class="tabla" id="tablaSegemetnos">
-                    <thead>
-                        <tr>
-                            <th>Id</th>
-                            <th>Nombre del proceso</th>
-                            <th>Parte</th>
-                            <th>Tamaño del proceso</th>
-                            <th>Posición</th>
-                            <th>Apagar</th>
-                        </tr>
-                    </thead>
-                    <tbody id="segmentos">
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="titulo" id="tituloLibres" style="display: none;">Direcciones libres</div>
-            <div class="contenedorTablaLibres" style="display: none;">
-                <table class="tabla" id="tablaLibres">
-                    <thead>
-                        <tr>
-                            <th>Tamaño</th>
-                            <th>Dirección</th>
-                        </tr>
-                    </thead>
-                    <tbody id="libres">
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="titulo" id="tituloMarcos" style="display: none;">Marcos</div>
-            <div class="contenedorTablaMarcos" style="display: none;">
-                <table class="tabla" id="tablaMarcos">
-                    <thead>
-                        <tr>
-                            <th>Id marco</th>
-                            <th>Dir. base</th>
-                            <th>Libre</th>
-                        </tr>
-                    </thead>
-                    <tbody id="marcos">
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="titulo" id="tituloTPP" style="display: none;">TPP</div>
-            <div class="contenedorTablaTPP" style="display: none;">
-                <table class="tabla" id="tablaTPP">
-                    <thead>
-                        <tr>
-                            <th>Id proceso</th>
-                            <th>Nombre</th>
-                            <th>Pagina</th>
-                            <th>Marco</th>
-                            <th>Apagar</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tpps">
-                    </tbody>
-                </table>
-            </div>
+            <div class="titulo">Diagrama - Tiempos de Espera</div>
+<div class="contenedorGantt">
+  <table id="tablaGantt" class="tabla"></table>
+   <table class="tabla" id="tablaResumenMemoria"></table>
+</div>
         </div>
 
-        <div class="box"
-            style="/*! display: flex; *//*! align-items: center; */display: flex;justify-content: center;align-items: center;">
-            <canvas height="820" id="memoria">
-            </canvas>
-            <script src="logica.js">
-            </script>
+        <div class="box" id="memoriabox" style="display: flex; justify-content: center; align-items: center;">
+            <canvas height="820" id="memoria"></canvas>
+            <script src="logica.js"></script>
         </div>
     </div>
 </body>

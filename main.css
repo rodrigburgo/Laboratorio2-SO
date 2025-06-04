@@ -101,7 +101,7 @@ body {
 }
 
 .contenedorTablaEjecutados {
-  height: 860px;
+  height: 580px;
 }
 
 .contenedorTablaSegmentos,
@@ -244,3 +244,20 @@ canvas {
     height: 400px;
   }
 }
+
+.contenedorGantt {
+    margin-top: 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: var(--border-radius);
+    padding: 10px;
+    height: auto; /* Antes: 220px */
+    max-height: 500px; /* si quieres limitarlo */
+    overflow-y: auto;
+}
+
+#diagramaGantt {
+    width: 100%;
+    height: 100%;
+    background-color: white;
+}
+
