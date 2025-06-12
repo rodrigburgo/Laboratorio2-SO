@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de memoria</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="clases.js"></script>
+    <link rel="stylesheet" href="main.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="box">
+            <div class="titulo">Lista de programas</div>
+            <div class="contenedorTablaProgramas">
+                <table class="tabla" id="tablaProgramas">
+                    <thead>
+                        <tr>
+                            <th>Programa</th>
+                            <th>.TEXT</th>
+                            <th>.DATA</th>
+                            <th>.BSS</th>
+                            <th>Tamaño</th>
+                            <th>Iniciar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="programas">
+                    </tbody>
+                </table>
+            </div>
+            <button id="nuevoPrograma">Nuevo programa</button>
+
+            <div class="Modelo">
+                <div class="titulo"> Métodos de gestión de memoria </div>
+                <select name="" id="selecProgramas">
+                    <option selected="0" disabled=" "> Selecciona una particion</option>
+                    <option value="1">Dinamica con compactacion</option>
+                    <option value="2">Dinamica sin compactacion</option>
+                    <option value="3">Estatica variable</option>
+                    <option value="4">Estatica fija</option>
+                    <option value="5">Segmentacion</option>
+                    <option value="6">Paginacion</option>
+                </select>
+                <div class="form">
+                    <div id="contMetodos">
+                    </div>
+                </div>
+            </div>
+
+            <div class="ordenamiento">
+                <div class="titulo"> Tipo de ajuste </div>
+                <br>
+                <label class="labelOrd">Mejor ajuste
+                    <input type="radio" name="ordenamiento" value="mejor">
+                    <span class="checkmark"></span>
+                </label><br>
+
+                <label class="labelOrd">Peor ajuste
+                    <input type="radio" name="ordenamiento" value="peor">
+                    <span class="checkmark"></span>
+                </label><br>
+
+
+                <label class="labelOrd">
+                    Primer ajuste
+                    <input type="radio" name="ordenamiento" value="primer">
+                    <span class="checkmark"></span>
+                </label>
+            </div>
+            <button id="empezar">Iniciar</button>
+        </div>
+
+        <div class="box" id="tablasEjec">
+            <div class="titulo" id="tituloEjecutados">Lista de programas ejecutados</div>
+            <div class="contenedorTablaEjecutados">
+                <table class="tabla" id="tablaEjecutados">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Nombre del proceso</th>
+                            <th>Tamaño del proceso</th>
+                            <th>Posición</th>
+                            <th>Finalizar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ejecucion">
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="titulo" id="tituloSegmentacion" style="display: none;">Segmentos</div>
+            <div class="contenedorTablaSegmentos" style="display: none;">
+                <table class="tabla" id="tablaSegemetnos">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Nombre del proceso</th>
+                            <th>Parte</th>
+                            <th>Tamaño del proceso</th>
+                            <th>Posición</th>
+                            <th>Apagar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="segmentos">
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="titulo" id="tituloLibres" style="display: none;">Direcciones libres</div>
+            <div class="contenedorTablaLibres" style="display: none;">
+                <table class="tabla" id="tablaLibres">
+                    <thead>
+                        <tr>
+                            <th>Tamaño</th>
+                            <th>Dirección</th>
+                        </tr>
+                    </thead>
+                    <tbody id="libres">
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="titulo" id="tituloMarcos" style="display: none;">Marcos</div>
+            <div class="contenedorTablaMarcos" style="display: none;">
+                <table class="tabla" id="tablaMarcos">
+                    <thead>
+                        <tr>
+                            <th>Id marco</th>
+                            <th>Dir. base</th>
+                            <th>Libre</th>
+                        </tr>
+                    </thead>
+                    <tbody id="marcos">
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="titulo" id="tituloTPP" style="display: none;">TPP</div>
+            <div class="contenedorTablaTPP" style="display: none;">
+                <table class="tabla" id="tablaTPP">
+                    <thead>
+                        <tr>
+                            <th>Id proceso</th>
+                            <th>Nombre</th>
+                            <th>Pagina</th>
+                            <th>Marco</th>
+                            <th>Apagar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tpps">
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="titulo">Diagrama de Memoria</div>
+<div class="contenedorGantt">
+    <canvas id="chartMemoria" height="300"></canvas>
+</div>
+        </div>
+
+        <div class="box"
+            style="/*! display: flex; *//*! align-items: center; */display: flex;justify-content: center;align-items: center;">
+            <canvas height="820" id="memoria">
+            </canvas>
+            <script src="logica.js">
+            </script>
+        </div>
+    </div>
+</body>
+
+</html>
