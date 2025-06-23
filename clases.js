@@ -11,12 +11,48 @@ class Memoria {
     ];
     this.tamMaxSeg = 0;
     this.numMaxSeg = 0;
+    this.tamPag = 0;
+    this.numMaxPag = 0;
   }
 
   setMetodoSegmentacion(numSeg, offset) {
     this.tamMaxSeg = 2 ** offset;
     this.numMaxSeg = 2 ** numSeg;
   }
+
+  setMetodoPaginacion(numSeg, offset) {
+    this.tamPag = 2 ** offset;        // Tamaño de página en bytes
+    this.numMaxPag = 2 ** numSeg;     // Número máximo de páginas
+
+    const totalPaginas = (1048576 * 16) / this.tamPag; // Tamaño total de memoria dividida en páginas
+    this.segmentos = []; // Reiniciamos los segmentos
+
+    let posicion = 0;
+    const paginasSO = Math.ceil(this.so.getTamano() / this.tamPag); // Cantidad de páginas que ocupa el SO
+
+    // Agregamos las páginas del SO
+    for (let i = 0; i < paginasSO; i++) {
+      this.segmentos.push({
+        proceso: this.so,
+        tamano: this.tamPag,
+        posicion: componentToHex(posicion),
+      });
+      posicion += this.tamPag;
+    }
+
+    // Agregamos el resto de las páginas como libres
+    for (let i = paginasSO; i < totalPaginas; i++) {
+      this.segmentos.push({
+        proceso: null,
+        tamano: this.tamPag,
+        posicion: componentToHex(posicion),
+      });
+      posicion += this.tamPag;
+    }
+
+    console.log(this.segmentos);
+  }
+
 
   getSegmentos() {
     return this.segmentos;
@@ -110,7 +146,7 @@ class Memoria {
   }
 
   eliminarProcesoPag(id) {
-    for (let index = 0; index < this.segmentos.length; index++) {
+    for (let index = 1; index < this.segmentos.length; index++) {
       const element = this.segmentos[index];
 
       if (element.proceso != null) {
@@ -356,7 +392,7 @@ class Memoria {
         const tamanoSegmento = Math.min(tamMaxSeg, restantes);
         const segmento = {
           id: proceso.id,
-          nombre: `${num}(${proceso.nombre}(.${nombreBase})`,
+          nombre: `${num}.${proceso.nombre}.${nombreBase}`,
           tamano: tamanoSegmento,
         };
 
@@ -438,10 +474,11 @@ class Memoria {
   }
 
   compactarMemoria() {
+    console.log(this.segmentos);
     var memoriaDisponible = 0;
-    if (this.segmentos.length > 1) {
+    if (this.segmentos.length > 2) {
       /// Eliminar segmentos vacios
-      for (let index = 1; index < this.segmentos.length; index++) {
+      for (let index = 0; index < this.segmentos.length; index++) {
         const element = this.segmentos[index];
         if (element.proceso === null) {
           memoriaDisponible += element.tamano;

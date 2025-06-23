@@ -109,7 +109,11 @@
           style="display: none"
         >
           <span id="tituloTexto"></span>
-          <button class="btnApagar" id="btnApagarSegmento" style="margin-left: 10px">
+          <button
+            class="btnApagar"
+            id="btnApagarSegmento"
+            style="margin-left: 10px"
+          >
             Apagar
           </button>
         </div>
@@ -125,6 +129,7 @@
                 <th>Numero</th>
                 <th>Base</th>
                 <th>Limite</th>
+                <th>Parte</th>
               </tr>
             </thead>
             <tbody id="segmentoSeleccionado"></tbody>
@@ -185,13 +190,14 @@
       <div
         class="box"
         style="
-          /*! display: flex; */ /*! align-items: center; */
           display: flex;
           justify-content: center;
-          align-items: center;
+          align-items: flex-start; /* ✅ solución */
+          max-height: 100vh;
+          overflow-y: auto;
         "
       >
-        <canvas height="820" id="memoria"> </canvas>
+        <canvas id="memoria"> </canvas>
         <script src="logica.js"></script>
       </div>
     </div>

@@ -160,7 +160,7 @@ function llenarMarcos() {
         }
 
         const idHex = componentToHex(i);
-        var fila = "<tr><td>" + idHex + "</td><td>0x" + idHex + segmentos[i].posicion + "</td><td>" + libre + "</td></tr>";
+        var fila = "<tr><td>" + idHex + "</td><td>0x" + segmentos[i].posicion + "</td><td>" + libre + "</td></tr>";
 
         var btn = document.createElement("TR");
         btn.innerHTML = fila;
@@ -191,13 +191,43 @@ function llenarLibres() {
         cuerpoTabla.appendChild(tr);
     }
 }
+function mostrarSegmentosPorId(idSeleccionado) {
+    const cuerpoTabla = document.getElementById("segmentoSeleccionado");
+
+    const segmentosDelPrograma = segmentosEjecutados
+        .filter(p => p.id == idSeleccionado)
+        .sort((a, b) => Number(a.numero) - Number(b.numero));
+
+    cuerpoTabla.replaceChildren();
+
+    segmentosDelPrograma.forEach(programa => {
+        const numero = Number(programa.numero);
+        const baseHex = programa.posicion;
+        const baseDec = parseInt(baseHex, 16);
+        const limite = Number(programa.tamano);
+
+        const fila = document.createElement("tr");
+        fila.innerHTML = `
+            <td>${numero} (0x${numero.toString(16).toUpperCase()})</td>
+            <td>${baseDec} (0x${baseHex.toUpperCase()})</td>
+            <td>${limite} (0x${limite.toString(16).toUpperCase()})</td>
+            <td>${programa.parte}</td>
+        `;
+        cuerpoTabla.appendChild(fila);
+    });
+
+    const nombre = segmentosDelPrograma[0]?.nombre ?? "";
+    document.getElementById("tituloTexto").textContent = `Segmentos de (${idSeleccionado}) ${nombre}`;
+    document.getElementById("tituloSegmentoSeleccionado").style.display = "block";
+    document.getElementById("contenedorTablaSegmentoUnico").style.display = "block";
+
+    document.getElementById("btnApagarSegmento").dataset.id = idSeleccionado;
+}
 
 
 function llenarSegmentos() {
     const combo = document.getElementById("comboSegmentos");
     const cuerpoTabla = document.getElementById("segmentoSeleccionado");
-    const tabla = cuerpoTabla.closest("table");
-    const thead = tabla.querySelector("thead");
 
     combo.replaceChildren();
     cuerpoTabla.replaceChildren();
@@ -226,50 +256,16 @@ function llenarSegmentos() {
         combo.appendChild(option);
     }
 
-    function mostrarSegmentosPorId(idSeleccionado) {
-        const segmentosDelPrograma = segmentosEjecutados
-            .filter(p => p.id == idSeleccionado)
-            .sort((a, b) => Number(a.numero) - Number(b.numero));
-
-        cuerpoTabla.replaceChildren();
-
-        segmentosDelPrograma.forEach(programa => {
-            const numero = Number(programa.numero);
-            const baseHex = programa.posicion;
-            const baseDec = parseInt(baseHex, 16);  // Convertir de hex a decimal
-            const limite = Number(programa.tamano);
-
-            const fila = document.createElement("tr");
-            fila.innerHTML = `
-            <td>${numero} (0x${numero.toString(16).toUpperCase()})</td>
-            <td>${baseDec} (0x${baseHex.toUpperCase()})</td>
-            <td>${limite} (0x${limite.toString(16).toUpperCase()})</td>
-        `;
-            cuerpoTabla.appendChild(fila);
-        });
-
-        const nombre = idsUnicos[idSeleccionado];
-        document.getElementById("tituloTexto").textContent = `Segmentos de (${idSeleccionado}) ${nombre}`;
-        document.getElementById("tituloSegmentoSeleccionado").style.display = "block";
-        document.getElementById("contenedorTablaSegmentoUnico").style.display = "block";
-
-        document.getElementById("btnApagarSegmento").dataset.id = idSeleccionado;
-    }
-
     combo.onchange = function () {
         mostrarSegmentosPorId(combo.value);
     };
 
     const idKeys = Object.keys(idsUnicos);
-    if (idKeys.length === 1) {
-        const unicoId = idKeys[0];
+    if (idKeys.length >= 1) {
         combo.selectedIndex = 0;
-        mostrarSegmentosPorId(unicoId);
+        mostrarSegmentosPorId(combo.options[0].value);
     }
 }
-
-
-
 
 function llenarTpps() {
     document.getElementById("tpps").replaceChildren();
@@ -439,27 +435,70 @@ function agregarListener() {
                 break;
             case 5:
                 if (seleccionAjuste != undefined) {
-                    memoria.setMetodoSegmentacion(5, 19);
+                    // Obtener los valores
+                    const bitsLogicos = Number(document.getElementById("bitsLogicos")?.value);
+                    const bitsSegmento = Number(document.getElementById("bitsSegmento")?.value);
+                    const bitsOffset = Number(document.getElementById("bitsOffset")?.value);
+
+                    // Validar que todos sean números válidos
+                    const valoresValidos =
+                        !isNaN(bitsLogicos) &&
+                        !isNaN(bitsSegmento) &&
+                        !isNaN(bitsOffset) &&
+                        bitsLogicos > 0 &&
+                        bitsSegmento > 0 &&
+                        bitsOffset > 0;
+
+                    if (!valoresValidos) {
+                        alert("Por favor, ingrese valores numéricos válidos en los tres campos.");
+                        break;
+                    }
+
+                    // Validar que la suma sea coherente
+                    if (bitsSegmento + bitsOffset !== bitsLogicos) {
+                        alert(`La suma de bits de segmento (${bitsSegmento}) y offset (${bitsOffset}) debe ser igual a los bits lógicos totales (${bitsLogicos}).`);
+                        break;
+                    }
+
+                    // Si todo está correcto, aplicar
+                    memoria.setMetodoSegmentacion(bitsSegmento, bitsOffset);
                     activarBotones(botones);
                 } else {
                     alert("Debe seleccionar un tipo de ajuste");
                 }
                 break;
+
             case 6:
-                var tamPagina = document.getElementsByName("tamanoPagina");
-                const mega = 1048576;
-                if (tamPagina[0].value != "") {
-                    limpiarMemoria();
+                // Obtener los valores
+                const bitsLogicos = Number(document.getElementById("bitsLogicos")?.value);
+                const bitsSegmento = Number(document.getElementById("bitsSegmento")?.value);
+                const bitsOffset = Number(document.getElementById("bitsOffset")?.value);
 
-                    var cantParticiones = (mega * 15) / tamPagina[0].value;
+                // Validar que todos sean números válidos
+                const valoresValidos =
+                    !isNaN(bitsLogicos) &&
+                    !isNaN(bitsSegmento) &&
+                    !isNaN(bitsOffset) &&
+                    bitsLogicos > 0 &&
+                    bitsSegmento > 0 &&
+                    bitsOffset > 0;
 
-                    dibujarMemoria(cantParticiones, gestionMemoria);
-                    memoria.setMetodoFija(parseInt(cantParticiones));
-
-                    activarBotones(botones);
-                } else {
-                    alert("Debe llenar el tamaño de la pagina");
+                if (!valoresValidos) {
+                    alert("Por favor, ingrese valores numéricos válidos en los tres campos.");
+                    break;
                 }
+
+                // Validar que la suma sea coherente
+                if (bitsSegmento + bitsOffset !== bitsLogicos) {
+                    alert(`La suma de bits de segmento (${bitsSegmento}) y offset (${bitsOffset}) debe ser igual a los bits lógicos totales (${bitsLogicos}).`);
+                    break;
+                }
+
+                limpiarMemoria();
+
+                memoria.setMetodoPaginacion(bitsSegmento, bitsOffset);
+                llenarMarcos();
+                activarBotones(botones);
                 break;
             default:
                 alert("Debe seleccionar un método de gestión de memoria");
@@ -506,20 +545,30 @@ function agregarListener() {
 
     //// Detener programas en ejecución segmentacion
     $('#btnApagarSegmento').on('click', function (event) {
-        const id = $(this).data('id');
+        const id = $(this).attr('data-id');
         if (!id) return;
-
+        console.log(id);
         limpiarMemoria();
         dibujarMemoria(1, 4);
 
         memoria.eliminarProcesoPag(id);
         segmentosEjecutados = removeItemFromArr(segmentosEjecutados, id);
 
-        llenarSegmentos();
         llenarLibres();
         dibujarProcesos();
         dibujarDiagramaMemoria();
+
+        // Vuelve a llenar el combo y la tabla
+        llenarSegmentos();
+
+        // Forzar selección del siguiente disponible (si hay)
+        const combo = document.getElementById("comboSegmentos");
+        if (combo.options.length > 0) {
+            combo.selectedIndex = 0;
+            combo.onchange(); // dispara mostrarSegmentosPorId()
+        }
     });
+
 
     //// Detener programas en ejecución paginación
     $('#tablaTPP').on('click', '.btnApagar', function (event) {
@@ -574,7 +623,7 @@ function agregarListener() {
 
         var $row = $(this).closest("tr"),
             $tds = $row.find("td");
-
+        console.log($tds[0].textContent, $tds[1].textContent);
         memoria.eliminarProceso($tds[0].textContent, $tds[1].textContent, gestionMemoria);
 
         programasEjecutados = removeItemFromArr(programasEjecutados, $tds[0].textContent);
@@ -662,10 +711,31 @@ function agregarListener() {
             case "5":
                 console.log("Segmentacion");
                 gestionMemoria = 5;
-                $("#contMetodos").hide();
+                $("#contMetodos").show();
                 $(".ordenamiento").show();
                 mostrarTablasPag(false);
                 mostrarTablasSeg(true);
+
+                document.getElementById("contMetodos").replaceChildren();
+
+                camposSegmentacion = `
+      <div>
+        <label for="bitsLogicos">Bits lógicos totales:</label>
+        <input type="number" id="bitsLogicos" value="24" autocomplete="off" />
+      </div>
+      <div>
+        <label for="bitsSegmento">Bits para número de segmento:</label>
+        <input type="number" id="bitsSegmento" value="5" autocomplete="off" />
+      </div>
+      <div>
+        <label for="bitsOffset">Bits para offset:</label>
+        <input type="number" id="bitsOffset" value="19" autocomplete="off" />
+      </div>
+    `;
+
+                divSeg = document.createElement("DIV");
+                divSeg.innerHTML = camposSegmentacion;
+                document.getElementById("contMetodos").appendChild(divSeg);
 
                 ordenamiento[0].disabled = false;
                 ordenamiento[1].disabled = false;
@@ -681,11 +751,25 @@ function agregarListener() {
                 mostrarTablasPag(true);
 
                 document.getElementById("contMetodos").replaceChildren();
-                const confPagina = "<div>Tamaño de la pagina</div>" +
-                    "<input type='text' name='tamanoPagina' id='tamanoPagina' autocomplete='off' placeholder='Tamano en Bytes'>" + "</input>";
-                var btn = document.createElement("DIV");
-                btn.innerHTML = confPagina;
-                document.getElementById("contMetodos").appendChild(btn);
+
+                camposSegmentacion = `
+      <div>
+        <label for="bitsLogicos">Bits lógicos totales:</label>
+        <input type="number" id="bitsLogicos" value="32" autocomplete="off" />
+      </div>
+      <div>
+        <label for="bitsSegmento">Bits para número de segmento:</label>
+        <input type="number" id="bitsSegmento" value="16" autocomplete="off" />
+      </div>
+      <div>
+        <label for="bitsOffset">Bits para offset:</label>
+        <input type="number" id="bitsOffset" value="16" autocomplete="off" />
+      </div>
+    `;
+
+                divSeg = document.createElement("DIV");
+                divSeg.innerHTML = camposSegmentacion;
+                document.getElementById("contMetodos").appendChild(divSeg);
 
                 ordenamiento[0].disabled = true;
                 ordenamiento[1].disabled = true;
@@ -738,8 +822,8 @@ function ejecutarProceso(proceso) {
 
         idProceso += 1;
         procesoGuardado.forEach(procesog => {
-            var parte = procesog.proceso.nombre.slice(0, -1).split("(")
-            segmentosEjecutados.push({ "id": idProceso, "numero": parte[0], "nombre": parte[1], "parte": parte[2], "tamano": procesog.tamano, "posicion": procesog.posicion });
+            var parte = procesog.proceso.nombre.split(".")
+            segmentosEjecutados.push({ "id": idProceso, "numero": parte[0], "nombre": parte[1], "parte": "."+parte[2], "tamano": procesog.tamano, "posicion": procesog.posicion });
         });
         llenarSegmentos();
         llenarLibres();
@@ -758,7 +842,6 @@ function ejecutarProceso(proceso) {
 
     dibujarProcesos();
     dibujarDiagramaMemoria();
-    console.log(segmentosEjecutados);
 }
 
 function dibujarProcesos() {
