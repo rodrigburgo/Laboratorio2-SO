@@ -268,26 +268,85 @@ function llenarSegmentos() {
 }
 
 function llenarTpps() {
-    document.getElementById("tpps").replaceChildren();
+    const combo = document.getElementById("comboTpp");
+    const cuerpoTabla = document.getElementById("tpps");
 
-    for (let i = 0; i < programasTTP.length; i++) {
-        const programa = programasTTP[i];
-        console.log(programasTTP);
-        var marco = determinarMarco(programa.nombre, programa.id);
+    combo.replaceChildren();
+    cuerpoTabla.replaceChildren();
 
-        var fila = "<tr><td>" + programa.id + "</td><td>" + programa.nombre + "</td><td>" + programa.pagina + "</td><td>" + componentToHex(marco) + "</td><td>" + "<button class='btn btnApagar'" + " value='" + i + "'>Apagar</button>" + "</tr>";
+    if (programasTTP.length === 0) {
+        document.getElementById("tituloTPP").style.display = "none";
+        document.getElementById("selectorTpp").style.display = "none";
+        document.getElementById("tituloTppSeleccionado").style.display = "none";
+        document.querySelector(".contenedorTablaTPP").style.display = "none";
+        return;
+    }
 
-        var btn = document.createElement("TR");
-        btn.innerHTML = fila;
-        document.getElementById("tpps").appendChild(btn);
+    document.getElementById("tituloTPP").style.display = "block";
+    document.getElementById("selectorTpp").style.display = "block";
+    document.getElementById("tituloTppSeleccionado").style.display = "block";
+    document.querySelector(".contenedorTablaTPP").style.display = "block";
+
+    const idsUnicos = {};
+    programasTTP.forEach(p => {
+        if (!idsUnicos[p.id]) {
+            idsUnicos[p.id] = p.nombre;
+        }
+    });
+
+    for (const id in idsUnicos) {
+        const option = document.createElement("option");
+        option.value = id;
+        option.textContent = `(${id}) ${idsUnicos[id]}`;
+        combo.appendChild(option);
+    }
+
+    combo.onchange = function () {
+        mostrarTppsPorId(combo.value);
+    };
+
+    const idKeys = Object.keys(idsUnicos);
+    if (idKeys.length >= 1) {
+        combo.selectedIndex = 0;
+        mostrarTppsPorId(combo.options[0].value);
     }
 }
 
-function determinarMarco(nombreProceso, idProceso) {
 
+function mostrarTppsPorId(idProceso) {
+    const cuerpoTabla = document.getElementById("tpps");
+    cuerpoTabla.replaceChildren();
+
+    const registros = programasTTP.filter(p => p.id == idProceso);
+
+    if (registros.length === 0) return;
+
+    // Título con nombre del proceso
+    document.getElementById("tituloTppTexto").textContent = `TPP de ${registros[0].nombre} (ID: ${idProceso})`;
+    document.getElementById("btnApagarTpp").setAttribute('data-id', idProceso);
+
+    registros.forEach((programa) => {
+        const nombreCompleto = `${programa.numero}.${programa.nombre}${programa.parte}`;
+        const marco = determinarMarco(nombreCompleto, programa.id);
+
+        const marcoDec = marco >= 0 ? marco : "N/A";
+        const marcoHex = marco >= 0 ? componentToHex(marco) : "N/A";
+
+        const fila = document.createElement("tr");
+        fila.innerHTML = `
+            <td>${programa.pagina}</td>
+            <td>${marcoDec} / ${marcoHex}</td>
+            <td>${programa.parte}</td>
+        `;
+        cuerpoTabla.appendChild(fila);
+    });
+}
+
+
+
+function determinarMarco(nombreProceso, idProceso) {
     var segmentos = memoria.getSegmentos();
     var marco = 0;
-
     for (let index = 0; index < segmentos.length; index++) {
         if (segmentos[index].proceso == null) {
             console.log("null");
@@ -547,11 +606,10 @@ function agregarListener() {
     $('#btnApagarSegmento').on('click', function (event) {
         const id = $(this).attr('data-id');
         if (!id) return;
-        console.log(id);
         limpiarMemoria();
         dibujarMemoria(1, 4);
 
-        memoria.eliminarProcesoPag(id);
+        memoria.eliminarProcesoSeg(id);
         segmentosEjecutados = removeItemFromArr(segmentosEjecutados, id);
 
         llenarLibres();
@@ -571,35 +629,37 @@ function agregarListener() {
 
 
     //// Detener programas en ejecución paginación
-    $('#tablaTPP').on('click', '.btnApagar', function (event) {
+    $('#btnApagarTpp').on('click', function (event) {
+        const id = $(this).attr('data-id');
+        if (!id) return;
+
         limpiarMemoria();
 
-        var tamPagina = document.getElementsByName("tamanoPagina");
-        const mega = 1048576;
-        var cantParticiones = (mega * 15) / tamPagina[0].value;
+        memoria.eliminarProcesoPag(id); // elimina de la memoria
+        programasTTP = removeItemFromArr(programasTTP, id); // elimina del arreglo visual
 
-        dibujarMemoria(cantParticiones, gestionMemoria);
-
-        var $row = $(this).closest("tr"),
-            $tds = $row.find("td");
-
-        memoria.eliminarProcesoPag($tds[0].textContent);
-
-        programasTTP = removeItemFromArr(programasTTP, $tds[0].textContent);
-
-        for (let index = 0; index < programasTTP.length; index++) {
-            const element = programasTTP[index];
-            var proceso = memoria.getProceso(element.id);
-            element.posicion = proceso[0].posicion;
+        // Actualizar posiciones
+        for (let i = 0; i < programasTTP.length; i++) {
+            const element = programasTTP[i];
+            const proceso = memoria.getProceso(element.id);
+            if (proceso && proceso.length > 0) {
+                element.posicion = proceso[0].posicion;
+            }
         }
 
         llenarMarcos();
-
         llenarTpps();
-
         dibujarProcesos();
         dibujarDiagramaMemoria();
-    })
+
+        // Rellenar combo y tabla
+        const combo = document.getElementById("comboTpp");
+        if (combo.options.length > 0) {
+            combo.selectedIndex = 0;
+            combo.onchange(); // Dispara mostrarTppsPorId()
+        }
+    });
+
 
     //// Detener prorgamas en ejecución
     $('#tablaEjecutados').unbind('click');
@@ -796,7 +856,6 @@ function ejecutarProceso(proceso) {
         "heap": heap,
         "nombre": proceso[0].textContent, "tamano": proceso[6].textContent
     }, gestionMemoria, seleccionAjuste);
-
     if (resultado == 1) {
         alert("Memoria insuficiente");
         return 0;
@@ -823,7 +882,7 @@ function ejecutarProceso(proceso) {
         idProceso += 1;
         procesoGuardado.forEach(procesog => {
             var parte = procesog.proceso.nombre.split(".")
-            segmentosEjecutados.push({ "id": idProceso, "numero": parte[0], "nombre": parte[1], "parte": "."+parte[2], "tamano": procesog.tamano, "posicion": procesog.posicion });
+            segmentosEjecutados.push({ "id": idProceso, "numero": parte[0], "nombre": parte[1], "parte": "." + parte[2], "tamano": procesog.tamano, "posicion": procesog.posicion });
         });
         llenarSegmentos();
         llenarLibres();
@@ -835,7 +894,8 @@ function ejecutarProceso(proceso) {
         llenarMarcos();
 
         for (let index = 0; index < procesoGuardado.length; index++) {
-            programasTTP.push({ "id": procesoGuardado[index].proceso.id, "nombre": procesoGuardado[index].proceso.nombre, "pagina": index });
+            var parte = procesoGuardado[index].proceso.nombre.split(".");
+            programasTTP.push({ "id": procesoGuardado[index].proceso.id, "numero": parte[0], "parte": "." + parte[2], "nombre": parte[1], "pagina": index });
         }
         llenarTpps();
     }

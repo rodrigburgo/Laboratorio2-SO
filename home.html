@@ -167,14 +167,32 @@
 
         <div class="titulo" id="tituloTPP" style="display: none">TPP</div>
         <div class="contenedorTablaTPP" style="display: none">
+          <div id="selectorTpp" style="display: none">
+            <label for="comboTpp">Selecciona un proceso:</label>
+            <select id="comboTpp">
+              <option disabled selected>Selecciona un proceso</option>
+            </select>
+            <div
+              class="titulo"
+              id="tituloTppSeleccionado"
+              style="display: none"
+            >
+              <span id="tituloTppTexto"></span>
+              <button
+                class="btnApagar"
+                id="btnApagarTpp"
+                style="margin-left: 10px"
+              >
+                Apagar
+              </button>
+            </div>
+          </div>
           <table class="tabla" id="tablaTPP">
             <thead>
               <tr>
-                <th>Id proceso</th>
-                <th>Nombre</th>
-                <th>Pagina</th>
-                <th>Marco</th>
-                <th>Apagar</th>
+                <th>Página</th>
+                <th>Marco (dec / hex)</th>
+                <th>Parte</th>
               </tr>
             </thead>
             <tbody id="tpps"></tbody>

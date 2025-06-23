@@ -145,7 +145,7 @@ class Memoria {
     }
   }
 
-  eliminarProcesoPag(id) {
+  eliminarProcesoSeg(id) {
     for (let index = 1; index < this.segmentos.length; index++) {
       const element = this.segmentos[index];
 
@@ -156,6 +156,18 @@ class Memoria {
       }
     }
     this.dividirMemoria();
+  }
+
+  eliminarProcesoPag(id) {
+    for (let index = 0; index < this.segmentos.length; index++) {
+      const element = this.segmentos[index];
+
+      if (element.proceso != null) {
+        if (element.proceso.id == id) {
+          this.segmentos[index].proceso = null;
+        }
+      }
+    }
   }
 
   cabeSegmento(proceso) {
@@ -190,11 +202,9 @@ class Memoria {
         return 1;
       }
 
-      var procesoPaginado = this.paginarProceso(
-        proceso,
-        this.segmentos[0].tamano
+      return this.paginarProceso(
+        proceso
       );
-      return this.paginacion(procesoPaginado);
     }
 
     /// Segmentación
@@ -339,32 +349,60 @@ class Memoria {
     return 0;
   }
 
-  paginacion(paginasProceso) {
-    for (let index2 = 0; index2 < paginasProceso.length; index2++) {
-      for (let index = 0; index < this.segmentos.length; index++) {
-        const segmento = this.segmentos[index];
+  paginarProceso(proceso) {
+    const { tamPag, numMaxPag } = this;
+    const totalPaginasNecesarias =
+      Math.ceil(proceso.text / tamPag) +
+      Math.ceil(proceso.data / tamPag) +
+      Math.ceil(proceso.bss / tamPag) +
+      Math.ceil(proceso.stack / tamPag) +
+      Math.ceil(proceso.heap / tamPag);
+    if (totalPaginasNecesarias > numMaxPag) {
+      return 2;
+    }
 
-        if (segmento.proceso === null) {
-          this.segmentos[index].proceso = paginasProceso[index2];
-          break;
+    let resultado = null;
+    let error = false;
+    let num = 1;
+    const asignarPaginas = (nombreBase, tamanoTotal) => {
+      const cantidad = Math.ceil(tamanoTotal / tamPag);
+      let restantes = tamanoTotal;
+
+      for (let i = 0; i < cantidad; i++) {
+        const tamanoPaginaActual = Math.min(tamPag, restantes);
+        const pagina = {
+          id: proceso.id,
+          nombre: `${num}.${proceso.nombre}.${nombreBase}`,
+          tamano: tamanoPaginaActual,
+        };
+
+        resultado = this.primerAjuste(pagina);
+
+        if (resultado === 1 || resultado === 0) {
+          error = true;
+          return;
         }
+
+        restantes -= tamanoPaginaActual;
+        num++;
       }
-    }
-    return this.segmentos;
-  }
+    };
+    asignarPaginas("text", parseInt(proceso.text));
+    if (error) return this.eliminarProcesoPag(proceso.id), 1;
 
-  paginarProceso(proceso, tamanoPagina) {
-    var pagProceso = Math.ceil(proceso.tamano / tamanoPagina);
-    var arrProcesos = [];
+    asignarPaginas("data", parseInt(proceso.data));
+    if (error) return this.eliminarProcesoPag(proceso.id), 1; 
 
-    for (let index = 0; index < pagProceso; index++) {
-      arrProcesos.push({
-        id: proceso.id,
-        nombre: proceso.nombre + index,
-        tamano: tamanoPagina,
-      });
-    }
-    return arrProcesos;
+    asignarPaginas("bss", parseInt(proceso.bss));
+    if (error) return this.eliminarProcesoPag(proceso.id), 1;
+
+    asignarPaginas("heap", parseInt(proceso.heap));
+    if (error) return this.eliminarProcesoPag(proceso.id), 1;
+
+    asignarPaginas("stack", parseInt(proceso.stack));
+    if (error) return this.eliminarProcesoPag(proceso.id), 1;
+
+    return -1;
   }
 
   segmentarProceso(proceso, seleccionAjuste) {
