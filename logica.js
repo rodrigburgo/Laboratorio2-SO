@@ -1,39 +1,44 @@
-var programas = [{
-    "nombre": "Word",
-    "tamano": 1048576,
-    "bss": 165,
-    "data": 244986,
-    "text": 803425,
-},
-{
-    "nombre": "Excel",
-    "tamano": 1048576 * 2,
-    "bss": 256,
-    "data": 893772,
-    "text": 1203124,
-},
-{
-    "nombre": "NetBeans",
-    "tamano": 1048576 * 3,
-    "bss": 460,
-    "data": 1025223,
-    "text": 2120045,
-},
-{
-    "nombre": "Sublime Text",
-    "tamano": 1048576 / 2,
-    "bss": 80,
-    "data": 238860,
-    "text": 285348,
-},
-{
-    "nombre": "Android Studio",
-    "tamano": 1048576 * 6,
-    "bss": 1123,
-    "data": 1892119,
-    "text": 4398214,
-},
-]
+const stack = 65536;
+const heap = 131072;
+
+var programas = [
+  {
+    nombre: "Word",
+    tamano: 1048576,
+    bss: 165,
+    data: 179450,
+    text: 672353,
+  },
+  {
+    nombre: "Excel",
+    tamano: 2293760,
+    bss: 256,
+    data: 893772,
+    text: 1203124,
+  },
+  {
+    nombre: "NetBeans",
+    tamano: 3342336,
+    bss: 460,
+    data: 1025223,
+    text: 2120045,
+  },
+  {
+    nombre: "Sublime Text",
+    tamano: 720896,
+    bss: 80,
+    data: 238860,
+    text: 285348,
+  },
+  {
+    nombre: "Android Studio",
+    tamano: 6488064,
+    bss: 1123,
+    data: 1892119,
+    text: 4398214,
+  },
+];
+
 
 var particionesVariables = [1, 2, 2, 3, 3, 4]
 var gestionMemoria = 0;
@@ -54,7 +59,7 @@ function llenarProgramas() {
     for (let i = 0; i < programas.length; i++) {
         const programa = programas[i];
 
-        var fila = "<tr><td>" + programa.nombre + "</td><td>" + programa.text + "</td><td>" + programa.data + "</td><td>" + programa.bss + "</td><td>" + programa.tamano + "</td><td><button name = 'btnEncender' class='btn btnEncender'" + " value='" + i + "' disabled>Iniciar</button>" + "</td></tr>";
+        var fila = "<tr><td>" + programa.nombre + "</td><td>" + stack + "</td><td>" + heap + "</td><td>" + programa.text + "</td><td>" + programa.data + "</td><td>" + programa.bss + "</td><td>" + programa.tamano + "</td><td><button name = 'btnEncender' class='btn btnEncender'" + " value='" + i + "' disabled>Iniciar</button>" + "</td></tr>";
 
         var btn = document.createElement("TR");
         btn.innerHTML = fila;
@@ -328,7 +333,6 @@ function agregarListener() {
                     limpiarMemoria();
                     dibujarMemoria(1, 4);
 
-                    dibujarProceso("000000", "SO", 1048576);
                     activarBotones(botones);
                 } else {
                     alert("Debe seleccionar un tipo de ajuste");
@@ -339,7 +343,6 @@ function agregarListener() {
                     limpiarMemoria();
                     dibujarMemoria(1, 4);
 
-                    dibujarProceso("000000", "SO", 1048576);
                     activarBotones(botones);
                 } else {
                     alert("Debe seleccionar un tipo de ajuste");
@@ -352,7 +355,7 @@ function agregarListener() {
 
                     memoria.setMetodoVariable(particionesVariables);
 
-                    dibujarProceso("000000", "SO", 1048576);
+
                     activarBotones(botones);
                 } else {
                     alert("Debe seleccionar un tipo de ajuste");
@@ -366,20 +369,16 @@ function agregarListener() {
 
                     memoria.setMetodoFija(parseInt(cantParticion[0].value));
 
-                    dibujarProceso("000000", "SO", 1048576);
                     activarBotones(botones);
                 } else {
                     alert("Debe ingresar el número de particiones")
                 }
                 break;
             case 5:
-                if (seleccionAjuste != undefined) {
-                    limpiarMemoria();
-                    dibujarMemoria(1, 4);
-
-                    dibujarProceso("000000", "SO", 1048576);
+                if(seleccionAjuste != undefined){
+                    memoria.setMetodoSegmentacion(5, 19);
                     activarBotones(botones);
-                } else {
+                }else{
                     alert("Debe seleccionar un tipo de ajuste");
                 }
                 break;
@@ -394,7 +393,6 @@ function agregarListener() {
                     dibujarMemoria(cantParticiones, gestionMemoria);
                     memoria.setMetodoFija(parseInt(cantParticiones));
 
-                    dibujarProceso("000000", "SO", 1048576);
                     activarBotones(botones);
                 } else {
                     alert("Debe llenar el tamaño de la pagina");
@@ -404,6 +402,8 @@ function agregarListener() {
                 alert("Debe seleccionar un método de gestión de memoria");
                 limpiarMemoria();
         }
+        dibujarProcesos();
+        dibujarDiagramaMemoria();
         this.colores = [];
     })
 
@@ -421,7 +421,9 @@ function agregarListener() {
                 "text": text,
                 "data": data,
                 "bss": bss,
-                "tamano": data + text + bss,
+                "stack": stack,
+                "heap": heap,
+                "tamano": data + text + bss + stack + heap,
             });
             llenarProgramas();
         } else {
@@ -443,7 +445,6 @@ function agregarListener() {
     $('#tablaSegemetnos').on('click','.btnApagar', function (event){
         limpiarMemoria();
         dibujarMemoria(1, 4);
-        dibujarProceso("000000", "SO", 1048576);
 
         var $row = $(this).closest("tr"),
             $tds = $row.find("td");
@@ -468,9 +469,6 @@ function agregarListener() {
         var cantParticiones = (mega * 15) / tamPagina[0].value;
 
         dibujarMemoria(cantParticiones, gestionMemoria);
-
-
-        dibujarProceso("000000", "SO", 1048576);
 
         var $row = $(this).closest("tr"),
             $tds = $row.find("td");
@@ -512,7 +510,6 @@ function agregarListener() {
                 dibujarMemoria(cantParticion[0].value, gestionMemoria);
                 break;
         }
-        dibujarProceso("000000", "SO", 1048576);
 
         var $row = $(this).closest("tr"),
             $tds = $row.find("td");
@@ -647,10 +644,12 @@ function ejecutarProceso(proceso) {
     var seleccionAjuste = $('input:radio[name=ordenamiento]:checked').val();
 
     var resultado = memoria.insertarProceso({
-        "id": idProceso + 1, "bss": proceso[3].textContent,
-        "data": proceso[2].textContent,
-        "text": proceso[1].textContent,
-        "nombre": proceso[0].textContent, "tamano": proceso[4].textContent
+        "id": idProceso + 1, "bss": proceso[5].textContent,
+        "data": proceso[4].textContent,
+        "text": proceso[3].textContent,
+        "stack": stack,
+        "heap": heap,
+        "nombre": proceso[0].textContent, "tamano": proceso[6].textContent
     }, gestionMemoria, seleccionAjuste);
 
     if (resultado == 1) {
@@ -668,7 +667,7 @@ function ejecutarProceso(proceso) {
 
         idProceso += 1;
         programasEjecutados.push({
-            "id": idProceso, "nombre": proceso[0].textContent, "tamano": proceso[4].textContent, "posicion": procesoGuardado[0].posicion
+            "id": idProceso, "nombre": proceso[0].textContent, "tamano": proceso[6].textContent, "posicion": procesoGuardado[0].posicion
         });
         llenarEjecutados();
     }
@@ -698,6 +697,7 @@ function ejecutarProceso(proceso) {
 
     dibujarProcesos();
     dibujarDiagramaMemoria();
+    console.log(memoria.getSegmentos());
 }
 
 function dibujarProcesos() {
@@ -717,11 +717,11 @@ function calcularUsoMemoria() {
     const total = 15 * 1048576;
     const libre = memoria.getMemoriaDisponible();
     const usado = total - libre;
-    return usado / total;
+    return (usado / total)+1048576;
 }
 
 function dibujarDiagramaMemoria() {
-    const canvas = document.getElementById("diagramaGantt");
+    const canvas = document.getElementById("chartMemoria");
     if (!canvas.getContext) return;
     const ctx = canvas.getContext("2d");
     const width = canvas.width = 800;
