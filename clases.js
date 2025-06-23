@@ -84,7 +84,6 @@ class Memoria {
         posicion: componentToHex(Math.ceil(posicion)),
       });
     }
-    console.log(this.segmentos);
   }
 
   eliminarProceso(id, nombre, gestionMemoria) {
@@ -121,7 +120,6 @@ class Memoria {
       }
     }
     this.dividirMemoria();
-    console.log(this.segmentos)
   }
 
   cabeSegmento(proceso) {
@@ -349,7 +347,7 @@ class Memoria {
 
     let resultado = null;
     let error = false;
-
+    let num = 1;
     const asignarSegmentos = (nombreBase, tamanoTotal) => {
       const cantidad = Math.ceil(tamanoTotal / tamMaxSeg);
       let restantes = tamanoTotal;
@@ -358,7 +356,7 @@ class Memoria {
         const tamanoSegmento = Math.min(tamMaxSeg, restantes);
         const segmento = {
           id: proceso.id,
-          nombre: `${proceso.nombre}(.${nombreBase})`,
+          nombre: `${num}(${proceso.nombre}(.${nombreBase})`,
           tamano: tamanoSegmento,
         };
 
@@ -378,6 +376,7 @@ class Memoria {
         }
 
         restantes -= tamanoSegmento;
+        num++;
       }
     };
 
