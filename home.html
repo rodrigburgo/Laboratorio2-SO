@@ -1,88 +1,173 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gestión de memoria</title>
+    <title>Segmentación Paginada</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
     <script src="clases.js"></script>
     <link rel="stylesheet" href="main.css" />
-  </head>
-
-  <body>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
     <div class="container">
-      
-      <!-- Columna 1: Programas y configuración -->
-      <div class="box">
-        <div class="titulo">Lista de programas</div>
-        <div class="contenedorTablaProgramas">
-          <table class="tabla" id="tablaProgramas">
-            <thead>
-              <tr>
-                <th>Programa</th>
-                <th>.TEXT</th>
-                <th>.DATA</th>
-                <th>.BSS</th>
-                <th>Tamaño</th>
-              </tr>
-            </thead>
-            <tbody id="programas"></tbody>
-          </table>
+        <!-- Primera columna: Programas y configuración -->
+        <div class="box">
+            <div class="titulo">Lista de programas</div>
+            <div class="contenedorTablaProgramas">
+                <table class="tabla" id="tablaProgramas">
+                    <thead>
+                        <tr>
+                            <th>Programa</th>
+                            <th>.STACK</th>
+                            <th>.HEAP</th>
+                            <th>.TEXT</th>
+                            <th>.DATA</th>
+                            <th>.BSS</th>
+                            <th>Tamaño</th>
+                            <th>Iniciar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="programas"></tbody>
+                </table>
+            </div>
+            <button id="nuevoPrograma">Nuevo programa</button>
+
+            <div class="Modelo">
+                <div class="titulo">Configuración de memoria</div>
+                <div class="form">
+                    <div>
+                        <label for="bitsSegmento">Bits para segmento:</label>
+                        <input type="number" id="bitsSegmento" value="8" min="1" max="16" autocomplete="off" />
+                    </div>
+                    <div>
+                        <label for="bitsPagina">Bits para página:</label>
+                        <input type="number" id="bitsPagina" value="8" min="1" max="16" autocomplete="off" />
+                    </div>
+                    <div>
+                        <label for="bitsOffset">Bits para offset:</label>
+                        <input type="number" id="bitsOffset" value="16" min="1" max="24" autocomplete="off" />
+                    </div>
+                    <div>
+                        <label for="tamanoMemoria">Tamaño total memoria (MB):</label>
+                        <input type="number" id="tamanoMemoria" value="15" min="1" max="64" autocomplete="off" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="ordenamiento">
+                <div class="titulo">Tipo de ajuste</div>
+                <label class="labelOrd">Mejor ajuste
+                    <input type="radio" name="ordenamiento" value="mejor" checked />
+                    <span class="checkmark"></span>
+                </label><br />
+                <label class="labelOrd">Peor ajuste
+                    <input type="radio" name="ordenamiento" value="peor" />
+                    <span class="checkmark"></span>
+                </label><br />
+                <label class="labelOrd">Primer ajuste
+                    <input type="radio" name="ordenamiento" value="primer" />
+                    <span class="checkmark"></span>
+                </label>
+            </div>
+
+            <button id="empezar">Configurar Memoria</button>
         </div>
-        <button id="nuevoPrograma">Nuevo programa</button>
 
-        <div class="Modelo">
-          <div class="titulo">Métodos de gestión de memoria</div>
-          <select id="selecProgramas">
-            <option disabled selected>Selecciona una partición</option>
-            <option value="1">Dinámica con compactación</option>
-            <option value="2">Dinámica sin compactación</option>
-            <option value="3">Estática variable</option>
-            <option value="4">Estática fija</option>
-          </select>
-          <div class="form" id="contMetodos"></div>
+        <!-- Segunda columna: Tablas de segmentos y páginas -->
+        <div class="box">
+            <div class="titulo">Tabla de Segmentos</div>
+            <div class="contenedorTablaSegmentos">
+                <table class="tabla" id="tablaSegmentos">
+                    <thead>
+                        <tr>
+                            <th>ID Segmento</th>
+                            <th>Dir. Base (hex)</th>
+                            <th>Tamaño (KB)</th>
+                            <th>Páginas Usadas</th>
+                            <th>Proceso</th>
+                        </tr>
+                    </thead>
+                    <tbody id="segmentos"></tbody>
+                </table>
+            </div>
+
+            <div class="titulo">Tabla de Páginas por Proceso</div>
+            <div id="selectorTpp">
+                <select id="comboTpp" class="select-proceso">
+                    <option disabled selected>Selecciona un proceso</option>
+                </select>
+                <div id="tituloTppSeleccionado">
+                    <span id="tituloTppTexto"></span>
+                    <button class="btn btn-danger" id="btnApagarTpp">Eliminar Proceso</button>
+                </div>
+            </div>
+
+            <div class="contenedorTablaTPP">
+                <table class="tabla" id="tablaTPP">
+                    <thead>
+                        <tr>
+                            <th>Segmento</th>
+                            <th>Página</th>
+                            <th>Marco (hex)</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tpps"></tbody>
+                </table>
+            </div>
         </div>
 
-        <div class="ordenamiento">
-          <div class="titulo">Tipo de ajuste</div>
-          <label class="labelOrd">
-            Mejor ajuste
-            <input type="radio" name="ordenamiento" value="mejor" />
-            <span class="checkmark"></span>
-          </label>
-          <label class="labelOrd">
-            Peor ajuste
-            <input type="radio" name="ordenamiento" value="peor" />
-            <span class="checkmark"></span>
-          </label>
-          <label class="labelOrd">
-            Primer ajuste
-            <input type="radio" name="ordenamiento" value="primer" />
-            <span class="checkmark"></span>
-          </label>
+        <!-- Tercera columna: Visualización de memoria -->
+        <div class="box">
+            <div class="titulo">Visualización de Memoria</div>
+            <div class="memoria-container">
+                <canvas id="memoria" width="300" height="600"></canvas>
+            </div>
+            
+            <div class="titulo">Uso de Memoria por Segmento</div>
+            <div class="contenedorGantt">
+                <canvas id="chartMemoria"></canvas>
+            </div>
+            
+            <div class="stats-container">
+                <div class="stat-box">
+                    <span class="stat-label">Memoria Total:</span>
+                    <span class="stat-value" id="memoriaTotal">0 MB</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Memoria Usada:</span>
+                    <span class="stat-value" id="memoriaUsada">0 MB</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Memoria Libre:</span>
+                    <span class="stat-value" id="memoriaLibre">0 MB</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Fragmentación:</span>
+                    <span class="stat-value" id="fragmentacion">0%</span>
+                </div>
+            </div>
+            
+            <div class="titulo">Información del Sistema</div>
+            <div class="info-container">
+                <div class="info-item">
+                    <span>Tamaño de página:</span>
+                    <span id="tamanoPagina">-</span>
+                </div>
+                <div class="info-item">
+                    <span>Segmentos totales:</span>
+                    <span id="totalSegmentos">-</span>
+                </div>
+                <div class="info-item">
+                    <span>Páginas por segmento:</span>
+                    <span id="paginasPorSegmento">-</span>
+                </div>
+            </div>
         </div>
-      </div>
-
-      <!-- Columna 2: Simulación -->
-      <div class="box" id="tablasEjec" >
-        <div class="titulo">Simulador de ejecución de procesos por tiempo</div>
-        <label for="tiempos">Cantidad de tiempos a simular:</label>
-        <input type="number" id="tiempos" min="1" value="6" />
-        <button onclick="generarTabla()">Generar tabla</button>
-        <div id="contenedorTabla"></div>
-        <button id="btnMostrarTabla" onclick="simular()" style="display: none;">Simular</button>
-        <label id="lbSelectorTiempos" for="selectorTiempos" style="display: none;">Selecciona un tiempo:</label>
-        <select id="selectorTiempos" style="display: none;"></select>
-      </div>
-
-      <!-- Columna 3: Visualización canvas -->
-      <div class="box" style="display: flex; justify-content: center; align-items: center;">
-        <canvas width="400" height="700" id="memoria"></canvas>
-      </div>
-
     </div>
-
+    
     <script src="logica.js"></script>
-  </body>
+</body>
 </html>
