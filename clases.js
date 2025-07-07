@@ -21,18 +21,6 @@ class Memoria {
         return proceso;
     }
 
-    getProcesos() {
-        var procesos = [];
-
-        this.segmentos.forEach(segmento => {
-            if (segmento.proceso != null) {
-                procesos.push(segmento.proceso);
-            }
-        });
-
-        return procesos;
-    }
-
     getMemoriaDisponible() {
         var count = 0;
         this.segmentos.forEach(segmento => {
@@ -98,6 +86,19 @@ class Memoria {
         }
     }
 
+    eliminarProcesoPag(id) {
+        for (let index = 0; index < this.segmentos.length; index++) {
+            const element = this.segmentos[index];
+
+            if (element.proceso != null) {
+                if (element.proceso.id == id) {
+                    this.segmentos[index].proceso = null;
+                }
+            }
+        }
+        this.dividirMemoria();
+    }
+
     cabeSegmento(proceso) {
         var cabe = false;
         var segmentosLibres = [];
@@ -121,6 +122,30 @@ class Memoria {
     }
 
     insertarProceso(proceso, metodo, seleccionAjuste) {
+        /// Paginacion
+        if (metodo == 6) {
+            if (this.getMemoriaDisponible() == 0) {
+                return 0;
+            }
+            if (this.getMemoriaDisponible() < proceso.tamano) {
+                return 1;
+            }
+
+            var procesoPaginado = this.paginarProceso(proceso, this.segmentos[0].tamano);
+            return this.paginacion(procesoPaginado);
+        }
+
+        /// Segmentación
+        if (metodo == 5) {
+            if (this.getMemoriaDisponible() == 0) {
+                return 0;
+            }
+            if (this.getMemoriaDisponible() < proceso.tamano) {
+                return 1;
+            }
+
+            return this.segmentarProceso(proceso, seleccionAjuste);
+        }
 
         /// Metodo estatico fijo
         if (metodo == 4) {
@@ -139,7 +164,7 @@ class Memoria {
 
         /// Evalua los metodos de dinamica
         if (metodo == 1 || metodo == 2) {
-            /// Sí hubo algún error en el llenado el proceso
+            /// Sí hubi algún error en el llenadod el proceso
             if (resultado == 1 || resultado == 0) {
                 return resultado;
             }
@@ -172,38 +197,35 @@ class Memoria {
     }
 
     peorAjuste(proceso) {
+        // return 1 si el proceso no cabe en el segmento
+        // return 0 si la memoria esta llena
         var memoriaLlena = true;
-        var indicePeor = -1;
-        var mayorTamano = -1;
-
-        for (let i = 0; i < this.segmentos.length; i++) {
-            const segmento = this.segmentos[i];
-
-            if (segmento.proceso === null) {
-                memoriaLlena = false;
-
-                if (segmento.tamano >= parseInt(proceso.tamano)) {
-                    if (segmento.tamano > mayorTamano) {
-                        mayorTamano = segmento.tamano;
-                        indicePeor = i;
-                    }
+        var segmento = 0;
+        for (let index = 0; index < this.segmentos.length; index++) {
+            const element = this.segmentos[index];
+            if (element.proceso === null) {
+                if (element.tamano >= parseInt(proceso.tamano)) {
+                    segmento = index;
                 }
+                memoriaLlena = false;
             }
         }
 
+        if (segmento == 0 && this.segmentos[segmento].proceso != null) {
+            return 1;
+        }
+
         if (memoriaLlena) {
-            return 0; // La memoria está llena
+            return 0;
         }
 
-        if (indicePeor === -1) {
-            return 1; // No hay espacio suficiente en ningún segmento
+        if (this.segmentos[segmento].tamano >= proceso.tamano) {
+            this.segmentos[segmento].proceso = proceso;
+            return this.segmentos;
         }
 
-        // Asignar el proceso al segmento más grande adecuado
-        this.segmentos[indicePeor].proceso = proceso;
-        return this.segmentos;
+        return 1;
     }
-
 
     mejorAjuste(proceso) {
         // return 1 si el proceso no cabe en el segmento
@@ -255,6 +277,102 @@ class Memoria {
             }
         }
         return 0;
+    }
+
+    paginacion(paginasProceso) {
+        for (let index2 = 0; index2 < paginasProceso.length; index2++) {
+            for (let index = 0; index < this.segmentos.length; index++) {
+                const segmento = this.segmentos[index];
+
+                if (segmento.proceso === null) {
+                    this.segmentos[index].proceso = paginasProceso[index2];
+                    break;
+                }
+            }
+        }
+        return this.segmentos;
+
+    }
+
+    paginarProceso(proceso, tamanoPagina) {
+        var pagProceso = Math.ceil(proceso.tamano / tamanoPagina);
+        var arrProcesos = [];
+
+        for (let index = 0; index < pagProceso; index++) {
+            arrProcesos.push({ "id": proceso.id, "nombre": proceso.nombre + index, "tamano": tamanoPagina });
+        }
+        return arrProcesos;
+    }
+
+    segmentarProceso(proceso, seleccionAjuste) {
+        var resultado = null;
+        var tamanoInsuficiente = false;
+        if (seleccionAjuste == 'primer') {
+            if (!this.cabeSegmento({ "tamano": proceso.bss })) {
+                tamanoInsuficiente = true;
+            }
+            resultado = this.primerAjuste({ "id": proceso.id, "nombre": proceso.nombre + " - BSS", "tamano": proceso.bss });
+            this.dividirMemoria();
+
+            if (!this.cabeSegmento({ "tamano": proceso.data })) {
+                tamanoInsuficiente = true;
+            }
+            resultado = this.primerAjuste({ "id": proceso.id, "nombre": proceso.nombre + " - Data", "tamano": proceso.data });
+            this.dividirMemoria();
+
+            if (!this.cabeSegmento({ "tamano": proceso.text })) {
+                tamanoInsuficiente = true;
+            }
+            resultado = this.primerAjuste({ "id": proceso.id, "nombre": proceso.nombre + " - Text", "tamano": proceso.text });
+
+        } else if (seleccionAjuste == 'peor') {
+            if (!this.cabeSegmento({ "tamano": proceso.bss })) {
+                tamanoInsuficiente = true;
+            }
+            resultado = this.peorAjuste({ "id": proceso.id, "nombre": proceso.nombre + " - BSS", "tamano": proceso.bss });
+            this.dividirMemoria();
+
+            if (!this.cabeSegmento({ "tamano": proceso.data })) {
+                tamanoInsuficiente = true;
+            }
+            resultado = this.peorAjuste({ "id": proceso.id, "nombre": proceso.nombre + " - Data", "tamano": proceso.data });
+            this.dividirMemoria();
+
+            if (!this.cabeSegmento({ "tamano": proceso.text })) {
+                tamanoInsuficiente = true;
+            }
+            resultado = this.peorAjuste({ "id": proceso.id, "nombre": proceso.nombre + " - Text", "tamano": proceso.text });
+
+        } else if (seleccionAjuste == 'mejor') {
+            if (!this.cabeSegmento({ "tamano": proceso.bss })) {
+                tamanoInsuficiente = true;
+            }
+            resultado = this.mejorAjuste({ "id": proceso.id, "nombre": proceso.nombre + " - BSS", "tamano": proceso.bss });
+            this.dividirMemoria();
+
+            if (!this.cabeSegmento({ "tamano": proceso.data })) {
+                tamanoInsuficiente = true;
+            }
+            resultado = this.mejorAjuste({ "id": proceso.id, "nombre": proceso.nombre + " - Data", "tamano": proceso.data });
+            this.dividirMemoria();
+
+            if (!this.cabeSegmento({ "tamano": proceso.text })) {
+                tamanoInsuficiente = true;
+            }
+            resultado = this.mejorAjuste({ "id": proceso.id, "nombre": proceso.nombre + " - Text", "tamano": proceso.text });
+        }
+
+        if (tamanoInsuficiente) {
+            this.eliminarProcesoPag(proceso.id);
+            resultado = 1;
+        }
+
+        /// Sí hubo algún error en el llenadod el proceso
+        if (resultado == 1 || resultado == 0) {
+            return resultado;
+        }
+
+        return this.dividirMemoria();
     }
 
     dividirMemoria() {
@@ -322,6 +440,142 @@ class Memoria {
 
         return this.segmentos;
     }
+
+
+    setMetodoSegmentacionPaginada(bitsSegmento, bitsPagina, bitsOffset) {
+        // Validar que la suma de bits sea 32
+        if (bitsSegmento + bitsPagina + bitsOffset !== 32) {
+            throw new Error("La suma de bits debe ser igual a 32");
+        }
+
+        // Calcular número de segmentos y páginas basado en los bits
+        const numSegmentos = Math.pow(2, bitsSegmento);
+        const tamanoPagina = Math.pow(2, bitsOffset);
+        const tamanoSegmento = Math.pow(2, bitsPagina) * tamanoPagina;
+
+        // Limpiar segmentos existentes
+        this.segmentos = [];
+        
+        // Crear segmentos paginados
+        var posicion = 1048576; // 0x100000 en decimal
+        for (let i = 0; i < numSegmentos; i++) {
+            this.segmentos.push({
+                "proceso": null,
+                "tamano": tamanoSegmento,
+                "posicion": componentToHex(Math.ceil(posicion)),
+                "paginas": Array(Math.pow(2, bitsPagina)).fill(null)
+            });
+            posicion += tamanoSegmento;
+        }
+        
+        this.tamanoPagina = tamanoPagina;
+        this.bitsSegmento = bitsSegmento;
+        this.bitsPagina = bitsPagina;
+        this.bitsOffset = bitsOffset;
+    }
+
+    insertarProcesoSegmentacionPaginada(proceso, seleccionAjuste) {
+        // Verificar memoria disponible
+        if (this.getMemoriaDisponible() == 0) {
+            return 0; // Memoria llena
+        }
+        
+        if (this.getMemoriaDisponible() < proceso.tamano) {
+            return 1; // Memoria insuficiente
+        }
+
+        // Dividir el proceso en segmentos (BSS, DATA, TEXT)
+        const segmentosProceso = [
+            { nombre: proceso.nombre + ".BSS", tamano: proceso.bss },
+            { nombre: proceso.nombre + ".DATA", tamano: proceso.data },
+            { nombre: proceso.nombre + ".TEXT", tamano: proceso.text }
+        ];
+
+        let idProceso = proceso.id;
+        let resultado = null;
+        let tamanoInsuficiente = false;
+
+        // Asignar cada segmento
+        for (const segmento of segmentosProceso) {
+            // Paginar el segmento
+            const paginasSegmento = this.paginarProceso(
+                { id: idProceso, nombre: segmento.nombre, tamano: segmento.tamano },
+                this.tamanoPagina
+            );
+
+            // Asignar páginas a segmentos libres
+            for (const pagina of paginasSegmento) {
+                let asignado = false;
+                
+                // Buscar un segmento con espacio para la página
+                for (let i = 0; i < this.segmentos.length; i++) {
+                    const seg = this.segmentos[i];
+                    
+                    // Verificar si el segmento tiene espacio para la página
+                    if (seg.proceso === null || 
+                        (seg.proceso.id === idProceso && seg.paginas.includes(null))) {
+                        
+                        // Buscar marco libre en el segmento
+                        const marcoLibre = seg.paginas.findIndex(p => p === null);
+                        if (marcoLibre !== -1) {
+                            seg.paginas[marcoLibre] = pagina;
+                            seg.proceso = { 
+                                id: idProceso, 
+                                nombre: pagina.nombre,
+                                tamano: pagina.tamano
+                            };
+                            asignado = true;
+                            break;
+                        }
+                    }
+                }
+                
+                if (!asignado) {
+                    tamanoInsuficiente = true;
+                    break;
+                }
+            }
+            
+            if (tamanoInsuficiente) break;
+        }
+
+        if (tamanoInsuficiente) {
+            this.eliminarProcesoPag(idProceso);
+            return 1; // No se pudo asignar todo el proceso
+        }
+
+        return this.dividirMemoria();
+    }
+
+
+    
+    setMetodoSegmentacionPaginada(bitsSegmento, bitsPagina, bitsOffset) {
+        if (bitsSegmento + bitsPagina + bitsOffset !== 32) {
+            throw new Error("La suma de bits debe ser 32");
+        }
+        
+        this.bitsSegmento = bitsSegmento;
+        this.bitsPagina = bitsPagina;
+        this.bitsOffset = bitsOffset;
+        
+        const numSegmentos = Math.pow(2, bitsSegmento);
+        this.tamanoPagina = Math.pow(2, bitsOffset);
+        const tamanoSegmento = Math.pow(2, bitsPagina) * this.tamanoPagina;
+        
+        this.segmentos = [];
+        let posicion = 1048576; // 0x100000
+        
+        for (let i = 0; i < numSegmentos; i++) {
+            this.segmentos.push({
+                "proceso": null,
+                "tamano": tamanoSegmento,
+                "posicion": componentToHex(Math.ceil(posicion)),
+                "paginas": Array(Math.pow(2, bitsPagina)).fill(null)
+            });
+            posicion += tamanoSegmento;
+        }
+    }
+    
 }
 
 class Proceso {
