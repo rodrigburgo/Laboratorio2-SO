@@ -101,7 +101,7 @@ body {
 }
 
 .contenedorTablaEjecutados {
-  height: 860px;
+  height: 580px;
 }
 
 .contenedorTablaSegmentos,
@@ -245,27 +245,18 @@ canvas {
   }
 }
 
-.tablaTiempos {
-  border: 1px solid #ccc;
-  border-collapse: collapse;
+.contenedorGantt {
+    margin-top: 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: var(--border-radius);
+    padding: 10px;
+    height: auto;
+    max-height: 500px;
+    overflow-y: auto;
 }
 
-.tablaTiempos thead {
-  background-color: var(--secondary-color);
-  color: var(--text-light);
-}
-
-.tablaTiempos th,
-.tablaTiempos td {
-  border: 1px solid #ccc;
-  padding: 10px;
-  text-align: center;
-}
-
-.tablaTiempos tbody tr:nth-child(even) {
-  background-color: #f4f4f4;
-}
-
-.tablaTiempos tbody tr:hover {
-  background-color: #e8f4ff;
+#diagramaGantt {
+    width: 100%;
+    height: 100%;
+    background-color: white;
 }
