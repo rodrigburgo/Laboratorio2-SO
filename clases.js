@@ -25,7 +25,7 @@ class Memoria {
         this.numMaxSeg = 2 ** numSeg;
         this.tamMaxSeg = this.numMaxPag * this.tamPag;
 
-        const totalMarcos = Math.floor(this.getMemoriaDisponible() / this.tamPag);
+        const totalMarcos = Math.floor((1048576 * 16) / this.tamPag);
         const base = parseInt(this.segmentos[1].posicion, 16);
 
         this.marcos = Array(totalMarcos).fill().map((_, i) => ({
@@ -151,6 +151,7 @@ class Memoria {
 
     eliminarProceso(id) {
         const idNum = Number(id);
+        
         this.marcos.forEach(marco => {
             if (marco["procesoId"] === idNum) {
                 marco.ocupado = false;
@@ -288,6 +289,10 @@ class Memoria {
 
         asignarPaginas("stack", parseInt(proceso.stack));
         if (error) return this.eliminarProceso(proceso.id), 1;
+
+        console.log("marcos después de insertar:", JSON.parse(JSON.stringify(this.marcos)));
+        console.log("segmentos después de insertar:", JSON.parse(JSON.stringify(this.tabSeg)));
+        console.log("memoria después de insertar:", JSON.parse(JSON.stringify(this.segmentos)));
         return -1;
     }
 
